@@ -4,6 +4,6 @@
  * Default Settings
  */
 
-define('FB_G_APPLICATION_ID','');
-define('FB_G_APPLICATION_REDIRECT_URL','');
-define('FB_G_APPLICATION_SECRET','');
+define('FB_G_APPLICATION_ID','testing');
+define('FB_G_APPLICATION_REDIRECT_URL','localhost');
+define('FB_G_APPLICATION_SECRET','test');
