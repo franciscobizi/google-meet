@@ -1,5 +1,5 @@
 {
-    "name": "fbizi/gmeet",
+    "name": "fbizi/google-meet",
     "description": "Google calendar and meet API",
     "keywords": ["Meeting", "Video Call", "Google"],
     "type": "library",
@@ -26,10 +26,9 @@
         "lint": "phplint lib"
     },
     "authors": [{
-        "name": "Francisco Bizi",
-        "email": "taylorsoft28@gmail.com"
+        "name": "Francisco Bizi"
     }],
     "require": {
-        "php": "^7.4"
+        "php": ">=7.4"
     }
 }

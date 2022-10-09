@@ -3,164 +3,217 @@
 namespace FBIZI\API;
 
 /**
- * Google Meet API Class
+ * Google Meet API class
+ *
+ * @author Francisco Bizi
  */
 class GoogleMeetApi
 {
-    private $token;
-    private $calendar_id = "primary";
-    private $event_title = "Consult";
-    private $full_day_event = 0;
-    private $event_time = "";
-    private $user_timezone = "";
-    private $endpoint = "";
-    private $base_endpoint = "https://www.googleapis.com/";
-    private $fields;
-    private $header = [];
+    protected const BASE_URL = "https://www.googleapis.com/";
+    public string $token;
+    private string $endpoint;
+    private array | string $fields;
+    private array $header = [];
+    private string $calendar_id = "primary";
 
     public function __construct(
-        private string|int $client_id,
+        private string $client_id,
         private string $redirect_url,
         private string $client_secret
     ) {
     }
 
-    public function getAccessToken($code = "")
+    public function getAccessToken($code = ""): void
     {
         if (!empty($code)) {
-            $this->endpoint = $this->base_endpoint . 'oauth2/v4/token';
+            $this->endpoint = self::BASE_URL . 'oauth2/v4/token';
             $this->fields = 'client_id=' .
                 $this->client_id . '&redirect_uri=' .
                 $this->redirect_url . '&client_secret=' .
                 $this->client_secret . '&code=' . $code . '&grant_type=authorization_code';
-            $token = $this->call();
+            $token = $this->fetch("POST", 'Error : Failed to get access token');
             if (isset($token['access_token'])) {
-                $this->token = $token;
+                $this->token = $token['access_token'];
             }
         }
     }
 
-    public function getUserCalendarTimezone()
+    public function getCalendarTimezone(): array
     {
         if (!empty($this->token)) {
-            $this->endpoint = $this->base_endpoint . 'calendar/v3/users/me/settings/timezone';
+            $this->endpoint = self::BASE_URL . 'calendar/v3/users/me/settings/timezone';
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            $data = $this->call('Error : Failed to get calendar timezone');
-            if (isset($data['value'])) {
-                $this->user_timezone = $data['value'];
-            }
+            return $this->fetch("GET", 'Error : Failed to get calendar timezone');
         }
     }
 
-    public function getUserCalendarsList()
+    public function getCalendarsList(): array
     {
         if (!empty($this->token)) {
-            $parameters = array();
-            $parameters['fields'] = 'items(id,summary,timeZone)';
-            $parameters['minAccessRole'] = 'owner';
-            $this->endpoint = $this->base_endpoint . 'calendar/v3/users/me/calendarList?' . http_build_query($parameters);
+            $params = array();
+            $params['fields'] = 'items(id,summary,timeZone)';
+            $params['minAccessRole'] = 'owner';
+            $this->endpoint = self::BASE_URL . 'calendar/v3/users/me/calendarList?' . http_build_query($params);
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            return $this->call('Error : Failed to get calendars list');
+            return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
     }
 
-    public function createUserEvent(
-        $calendar_id = '',
-        $event_title = '',
-        $full_day_event = 0,
-        $event_time = []
-    ) {
+    public function getCalendarById(string $calendar_id): array
+    {
         if (!empty($this->token)) {
             $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
-            $this->event_title = !empty($event_title) ? $event_title : $this->event_title;
-            $this->full_day_event = !empty($full_day_event) ? $full_day_event : $this->full_day_event;
-            $this->event_time = $event_time;
-
-            $this->endpoint = $this->base_endpoint . 'calendar/v3/calendars/' . $this->calendar_id . '/events';
-            $this->header = array('Authorization: Bearer ' . $this->token);
-            $this->fields = array('summary' => "Booked event");
-            if ($this->full_day_event == 1) {
-                //[ 'event_date' => '2016-12-31' ];
-                $this->fields['start'] = array('date' => $this->event_time['event_date']);
-                $this->fields['end'] = array('date' => $this->event_time['event_date']);
-            } else {
-                //[ 'start_time' => '2016-12-31T15:00:00', 'end_time' => '2016-12-31T16:00:00' ];
-                $this->fields['start'] = array('dateTime' => $this->event_time['start_time'], 'timeZone' => $this->user_timezone);
-                $this->fields['end'] = array('dateTime' => $this->event_time['end_time'], 'timeZone' => $this->user_timezone);
-            }
-
-            return $this->call('Error : Failed to create event');
+            $this->endpoint = self::BASE_URL . "calendar/v3/calendars/{$this->calendar_id}";
+            $this->header = array('Authorization: Bearer ' . $this->token, 'Accept: application/json');
+            $this->fields = [];
+            return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
+        return ['message' => "Get Google Meet token before add an event"];
     }
 
-    public function updateUserEvent(
-        $calendar_id = '',
-        $event_title = '',
-        $full_day_event = 0,
-        $event_time = [],
-        $event_id = 0
-    ) {
+    public function createEvent(array $event, string $calendar_id = ''): array
+    {
+        if (!empty($this->token)) {
+            $params = array();
+            $params["sendUpdates"] = "all";
+            $params["conferenceDataVersion"] = 1;
+            $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
+            $this->endpoint = self::BASE_URL .
+                "calendar/v3/calendars/{$this->calendar_id}/events?" .
+                http_build_query($params);
+
+            $this->header = array('Authorization: Bearer ' . $this->token);
+            $this->fields = $event;
+
+            if (!empty($this->fields)) {
+                return $this->fetch("POST", 'Error : Failed to create event', true);
+            }
+            return ['message' => "Missing event data body"];
+        }
+        return ['message' => "Get Google Meet token before add an event"];
+    }
+
+    public function getEvent(string $event_id, string $calendar_id = ''): array
+    {
         if (!empty($this->token)) {
             $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
-            $this->event_title = !empty($event_title) ? $event_title : $this->event_title;
-            $this->full_day_event = !empty($full_day_event) ? $full_day_event : $this->full_day_event;
-            $this->event_time = $event_time;
+            $this->endpoint = self::BASE_URL . "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}";
 
-            $this->endpoint = $this->base_endpoint . 'calendar/v3/calendars/' . $this->calendar_id . '/events';
             $this->header = array('Authorization: Bearer ' . $this->token);
-            $this->fields = array('summary' => "Booked event");
-            if ($this->full_day_event == 1) {
-                //[ 'event_date' => '2016-12-31' ];
-                $this->fields['start'] = array('date' => $this->event_time['event_date']);
-                $this->fields['end'] = array('date' => $this->event_time['event_date']);
-            } else {
-                //[ 'start_time' => '2016-12-31T15:00:00', 'end_time' => '2016-12-31T16:00:00' ];
-                $this->fields['start'] = array('dateTime' => $this->event_time['start_time'], 'timeZone' => $this->user_timezone);
-                $this->fields['end'] = array('dateTime' => $this->event_time['end_time'], 'timeZone' => $this->user_timezone);
+            $this->fields = [];
+            return $this->fetch("GET", 'Error : Failed to get event');
+        }
+        return ['message' => "Get Google Meet token before add an event"];
+    }
+
+    public function updateEvent(string $event_id, array $event, string $calendar_id = ''): array
+    {
+        if (!empty($this->token)) {
+            $params = array();
+            $params["sendUpdates"] = "all";
+            $params["conferenceDataVersion"] = 1;
+            $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
+            $this->endpoint = self::BASE_URL .
+                "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?" .
+                http_build_query($params);
+
+            $this->header = array('Authorization: Bearer ' . $this->token);
+            $this->fields = $event;
+
+            if (!empty($this->fields)) {
+                return $this->fetch("PUT", 'Error : Failed to update event', true);
             }
-
-            return $this->call('Error : Failed to update event');
+            return ['message' => "Missing event data body"];
         }
+        return ['message' => "Get Google Meet token before add an event"];
     }
 
-    public function cancelUserEvent($calendar_id = '', $event_id = 0)
+    public function cancelEvent(string $event_id, $calendar_id = ''): array
     {
         if (!empty($this->token)) {
-            $this->endpoint = $this->base_endpoint; //'calendar/v3/users/me/calendarList?' . http_build_query($parameters);
+            $params = array();
+            $params["sendUpdates"] = "all";
+            $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
+            $this->endpoint = self::BASE_URL .
+                "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?" .
+                http_build_query($params);
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            return $this->call('Error : Failed to cancel event');
+            return $this->fetch("DELETE", 'Error : Failed to cancel event');
         }
+        return ['message' => "Get Google Meet token before add an event"];
     }
 
-    public function deleteUserEvent($calendar_id = '', $event_id = 0)
-    {
-        if (!empty($this->token)) {
-            $this->endpoint = $this->base_endpoint; //'calendar/v3/users/me/calendarList?' . http_build_query($parameters);
-            $this->header = array('Authorization: Bearer ' . $this->token);
-            $this->fields = [];
-            return $this->call('Error : Failed to delete event');
-        }
+    public static function eventData(
+        array $attendees,
+        array $date_time,
+        string $meet_link,
+        string $event_title = "",
+        string $description = ""
+    ): array {
+
+        return [
+            'summary' => !empty($event_title) ? $event_title : "Booked consult",
+            'description' => !empty($description) ? $description : "Booked consult with patient",
+            'start' => $date_time,
+            'end' => $date_time,
+            'attendees' => $attendees,
+            'reminders' => [
+                'useDefault' => true,
+            ],
+            "conferenceData" => [
+                "createRequest" => [
+                    "conferenceSolutionKey" => [
+                        "type" => "hangoutsMeet"
+                    ],
+                    "requestId" => $meet_link
+                ]
+            ],
+
+        ];
     }
 
-    private function call($message = "")
+    private function fetch(string $method, string $message = "", bool $json = false): array
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
-        if(!empty($this->fields)){
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($this->fields));
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        if (!empty($this->header)) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
         }
+        switch ($method) {
+            case 'POST':
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $json == true ? json_encode($this->fields) : $this->fields);
+                break;
+            case 'PUT':
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $json == true ? json_encode($this->fields) : $this->fields);
+                break;
+            case 'DELETE':
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+                break;
+            default:
+                # code...
+                break;
+        }
+
         $data = json_decode(curl_exec($ch), true);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($http_code != 200)
-            throw new \Exception($message);
 
-        return $data;
+        switch ($http_code) {
+            case 200:
+                return $data;
+                break;
+            case 204:
+                return [];
+                break;
+            default:
+                return ['http_code' => $http_code, 'error' => $data, 'message' => $message];
+                break;
+        }
     }
 }
