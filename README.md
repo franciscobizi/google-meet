@@ -39,8 +39,8 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
                     "timeZone" => $timezone
                 ],
             ];
-    $meet_link = "uniquestring";
-    $event = GoogleCalendar::eventData($attendees, $event_time, $meet_link); // have three more optionals arguments, please look at this method
+    $meet_id = "uniquestring";
+    $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
     $data = $calendar->createEvent($event); // calendar_id is optionals argument
     // on successful will get the event resource
     // retrive event id or meet link $data['id'] | $data['hangoutLink']
@@ -52,7 +52,7 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
         ["email" => "test1@test.com"] // add 1 more attendee
     ];
     $event_id = $data['id'];
-    $event = GoogleCalendar::eventData($attendees, $event_time, $meet_link); // have three more optionals arguments, please look at this method
+    $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
     $data = $calendar->updateEvent($event_id, $event); // calendar_id is optionals argument
     // on successful will get the event resource
     

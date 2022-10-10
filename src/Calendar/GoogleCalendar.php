@@ -70,7 +70,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
-        return ['message' => "Get Google Meet token before add an event"];
+        return ['message' => "Get Google Calendar token before add an event"];
     }
 
     public function createEvent(array $event, string $calendar_id = ''): array
@@ -92,7 +92,7 @@ class GoogleCalendar
             }
             return ['message' => "Missing event data body"];
         }
-        return ['message' => "Get Google Meet token before add an event"];
+        return ['message' => "Get Google Calendar token before add an event"];
     }
 
     public function getEvent(string $event_id, string $calendar_id = ''): array
@@ -105,7 +105,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get event');
         }
-        return ['message' => "Get Google Meet token before add an event"];
+        return ['message' => "Get Google Calendar token before add an event"];
     }
 
     public function updateEvent(string $event_id, array $event, string $calendar_id = ''): array
@@ -127,7 +127,7 @@ class GoogleCalendar
             }
             return ['message' => "Missing event data body"];
         }
-        return ['message' => "Get Google Meet token before add an event"];
+        return ['message' => "Get Google Calendar token before add an event"];
     }
 
     public function cancelEvent(string $event_id, $calendar_id = ''): array
@@ -143,20 +143,20 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("DELETE", 'Error : Failed to cancel event');
         }
-        return ['message' => "Get Google Meet token before add an event"];
+        return ['message' => "Get Google Calendar token before add an event"];
     }
 
     public static function eventData(
         array $attendees,
         array $date_time,
-        string $meet_link,
+        string $meet_id,
         string $event_title = "",
         string $description = ""
     ): array {
 
         return [
-            'summary' => !empty($event_title) ? $event_title : "Booked consult",
-            'description' => !empty($description) ? $description : "Booked consult with patient",
+            'summary' => !empty($event_title) ? $event_title : "Consultation Appointment",
+            'description' => !empty($description) ? $description : "Consultation appointment with patient",
             'start' => $date_time['start'],
             'end' => $date_time['end'],
             'attendees' => $attendees,
@@ -168,7 +168,7 @@ class GoogleCalendar
                     "conferenceSolutionKey" => [
                         "type" => "hangoutsMeet"
                     ],
-                    "requestId" => $meet_link
+                    "requestId" => $meet_id
                 ]
             ],
 
@@ -197,7 +197,6 @@ class GoogleCalendar
                 curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
                 break;
             default:
-                # code...
                 break;
         }
 
