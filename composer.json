@@ -1,7 +1,7 @@
 {
     "name": "fbizi/google-meet",
-    "description": "Google calendar and meet API",
-    "keywords": ["Meeting", "Video Call", "Google"],
+    "description": "Google calendar events with meet conference",
+    "keywords": ["Calendar", "Events", "Meeting", "Video Call", "Google"],
     "license": "MIT",
     "type": "library",
     "autoload": {
@@ -27,7 +27,8 @@
         "lint": "phplint lib"
     },
     "authors": [{
-        "name": "Francisco Bizi"
+        "name": "Francisco Bizi",
+        "role": "Owner | Developer"
     }],
     "require": {
         "php": ">=7.4"

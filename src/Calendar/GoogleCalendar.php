@@ -1,13 +1,13 @@
 <?php
 
-namespace FBIZI\API;
+namespace FBIZI\Calendar;
 
 /**
- * Google Meet API class
+ * Google Calendar class
  *
  * @author Francisco Bizi
  */
-class GoogleMeetApi
+class GoogleCalendar
 {
     protected const BASE_URL = "https://www.googleapis.com/";
     public string $token;
@@ -157,8 +157,8 @@ class GoogleMeetApi
         return [
             'summary' => !empty($event_title) ? $event_title : "Booked consult",
             'description' => !empty($description) ? $description : "Booked consult with patient",
-            'start' => $date_time,
-            'end' => $date_time,
+            'start' => $date_time['start'],
+            'end' => $date_time['end'],
             'attendees' => $attendees,
             'reminders' => [
                 'useDefault' => true,
