@@ -55,8 +55,8 @@ final class GoogleCalendarTest extends TestCase
                         "timeZone" => $this->timeZones
                     ],
                 ];
-        $meet_link = "uniquestring";
-        $event = GoogleCalendar::eventData($attendees, $event_time, $meet_link);
+        $meet_id = "uniquestring";
+        $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id);
         $eventId = $this->calendar->createEvent($event);
         $this->assertIsString($eventId['id']);
     }
@@ -77,8 +77,8 @@ final class GoogleCalendarTest extends TestCase
                         "timeZone" => $this->timeZones
                     ],
                 ];
-        $meet_link = "uniquestring";
-        $event = GoogleCalendar::eventData($attendees, $event_time, $meet_link);
+        $meet_id = "uniquestring";
+        $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id);
         $eventId = $this->calendar->updateEvent($event_id, $event);
         $this->assertIsString($eventId['id']);
     }
