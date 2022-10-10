@@ -4,7 +4,7 @@ Light Google Calendar API library for managing events on Google Calendar. You ca
 ## Installation
 Package is available on [Packagist](https://packagist.org/packages/fbizi/google-meet), you can install it using Composer.
 
-```composer require fbizi/googlemeet```
+```composer require fbizi/google-meet```
 
 ## Dependencies
 - PHP 7.4+
