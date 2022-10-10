@@ -1,10 +1,10 @@
-# Google Meet
+# Google Calendar With Meet Conference
 Light Google Calendar API library for managing events on Google Calendar. You can create event with video conference (google meet), update and cancel. The library focus only on Calendar Events resource.
 
 ## Installation
 Package is available on [Packagist](https://packagist.org/packages/fbizi/google-meet), you can install it using Composer.
 
-```composer require fbizi/google-meet```
+```composer require fbizi/googlemeet```
 
 ## Dependencies
 - PHP 7.4+
