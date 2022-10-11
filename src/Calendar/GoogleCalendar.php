@@ -2,6 +2,8 @@
 
 namespace FBIZI\Calendar;
 
+use FBIZI\Traits\AuthErrorResponse;
+
 /**
  * Google Calendar class
  *
@@ -9,6 +11,8 @@ namespace FBIZI\Calendar;
  */
 class GoogleCalendar
 {
+    use AuthErrorResponse;
+
     protected const BASE_URL = "https://www.googleapis.com/";
     public string $token;
     private string $endpoint;
@@ -23,7 +27,7 @@ class GoogleCalendar
     ) {
     }
 
-    public function getAccessToken($code = ""): void
+    public function getAccessToken(string $code): void
     {
         if (!empty($code)) {
             $this->endpoint = self::BASE_URL . 'oauth2/v4/token';
@@ -46,6 +50,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendar timezone');
         }
+        $this->missingToken();
     }
 
     public function getCalendarsList(): array
@@ -59,6 +64,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
+        $this->missingToken();
     }
 
     public function getCalendarById(string $calendar_id): array
@@ -70,7 +76,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
-        return ['message' => "Get Google Calendar token before add an event"];
+        $this->missingToken();
     }
 
     public function createEvent(array $event, string $calendar_id = ''): array
@@ -92,7 +98,7 @@ class GoogleCalendar
             }
             return ['message' => "Missing event data body"];
         }
-        return ['message' => "Get Google Calendar token before add an event"];
+        $this->missingToken();
     }
 
     public function getEvent(string $event_id, string $calendar_id = ''): array
@@ -100,12 +106,11 @@ class GoogleCalendar
         if (!empty($this->token)) {
             $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
             $this->endpoint = self::BASE_URL . "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}";
-
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get event');
         }
-        return ['message' => "Get Google Calendar token before add an event"];
+        $this->missingToken();
     }
 
     public function updateEvent(string $event_id, array $event, string $calendar_id = ''): array
@@ -118,7 +123,6 @@ class GoogleCalendar
             $this->endpoint = self::BASE_URL .
                 "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?" .
                 http_build_query($params);
-
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = $event;
 
@@ -127,7 +131,7 @@ class GoogleCalendar
             }
             return ['message' => "Missing event data body"];
         }
-        return ['message' => "Get Google Calendar token before add an event"];
+        $this->missingToken();
     }
 
     public function cancelEvent(string $event_id, $calendar_id = ''): array
@@ -143,7 +147,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("DELETE", 'Error : Failed to cancel event');
         }
-        return ['message' => "Get Google Calendar token before add an event"];
+        $this->missingToken();
     }
 
     public static function eventData(
