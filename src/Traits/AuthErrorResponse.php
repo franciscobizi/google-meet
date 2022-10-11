@@ -9,7 +9,7 @@ namespace FBIZI\Traits;
  */
 trait AuthErrorResponse
 {
-    protected function missingToken(string $message = "")
+    protected function unauthenticated(string $message = "")
     {
         $message = !empty($message) ? $message : "Missing token. Get token before procceed to this action.";
         return ['code' => 401, 'message' => $message];
