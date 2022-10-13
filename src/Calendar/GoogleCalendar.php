@@ -50,7 +50,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendar timezone');
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public function getCalendarsList(): array
@@ -64,7 +64,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public function getCalendarById(string $calendar_id): array
@@ -76,7 +76,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get calendars list');
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public function createEvent(array $event, string $calendar_id = ''): array
@@ -98,7 +98,7 @@ class GoogleCalendar
             }
             return ['message' => "Missing event data body"];
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public function getEvent(string $event_id, string $calendar_id = ''): array
@@ -110,7 +110,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("GET", 'Error : Failed to get event');
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public function updateEvent(string $event_id, array $event, string $calendar_id = ''): array
@@ -131,7 +131,7 @@ class GoogleCalendar
             }
             return ['message' => "Missing event data body"];
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public function cancelEvent(string $event_id, $calendar_id = ''): array
@@ -147,7 +147,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch("DELETE", 'Error : Failed to cancel event');
         }
-        $this->unauthenticated();
+        return $this->unauthenticated();
     }
 
     public static function eventData(
