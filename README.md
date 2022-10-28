@@ -63,3 +63,10 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
 }
 
 ```
+
+## Donation
+Methods :
+
+- [Buy me a coffee](https://www.buymeacoffee.com/franciscobizi)
+
+If this project help you reduce time to develop, you can give me a cup of coffee :)
