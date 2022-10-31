@@ -30,6 +30,12 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
     $code = sanitize_your_code($_GET['code']); // use your own function to sanitize the code due to security
     $calendar->getAccessToken($code);
 
+    // if you want to save the token some where for use later e.g DB just call this
+    $saved_token = $calendar->token // you get the token
+
+    // to assign saved token just do this
+    $calendar->token = $saved_token; 
+
     // for event creation
     $timezone = $calendar->getCalendarTimezone(); // to get user calendar timezone
     $attendees = [
@@ -62,7 +68,7 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
         ["email" => "test@test.com"],
         ["email" => "test1@test.com"] // add 1 more attendee
     ];
-    
+
     $event_id = $data['id'];
 
     $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
