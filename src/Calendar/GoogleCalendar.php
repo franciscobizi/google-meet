@@ -14,6 +14,7 @@ class GoogleCalendar
     use AuthErrorResponse;
 
     protected const BASE_URL = "https://www.googleapis.com/";
+    protected const ACCOUNT_URL = "https://accounts.google.com/";
     public string $token;
     private string $endpoint;
     private array | string $fields;
@@ -25,6 +26,20 @@ class GoogleCalendar
         private string $redirect_url,
         private string $client_secret
     ) {
+    }
+
+    public static function auth(
+        string $redirect_url,
+        string $client_id,
+        string $access_type = "online"
+    ): string {
+        if (!empty($redirect_url) && !empty($client_id)) {
+            return self::ACCOUNT_URL . 'o/oauth2/auth?scope='
+                . urlencode(self::BASE_URL . 'auth/calendar')
+                . '&redirect_uri=' . $redirect_url
+                . '&response_type=code&client_id=' . $client_id . '&access_type=' . $access_type;
+        }
+        return '';
     }
 
     public function getAccessToken(string $code): void
