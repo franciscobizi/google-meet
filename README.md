@@ -16,19 +16,26 @@ Before use this library make sure to register a Google Application and enable Ca
 use FBIZI\Calendar\GoogleCalendar;
 
 $calendar = new GoogleCalendar(CLIENT_ID, CLIENT_REDIRECT_URL, CLIENT_SECRET);
-$permission_url = 'https://accounts.google.com/o/oauth2/auth?scope=' 
+
+// Build authenticate link so you can call it
+$url = GoogleCalendar::auth(CLIENT_REDIRECT_URL, CLIENT_ID);
+
+// OR
+$url = 'https://accounts.google.com/o/oauth2/auth?scope=' 
                   . urlencode('https://www.googleapis.com/auth/calendar') 
                   . '&redirect_uri=' . CLIENT_REDIRECT_URL 
-                  . '&response_type=code&client_id=' . CLIENT_ID . '&access_type=online'; // call this to authenticate
+                  . '&response_type=code&client_id=' . CLIENT_ID . '&access_type=online';
 
 if(isset($_GET['code']) && !empty($_GET['code'])){
     $code = sanitize_your_code($_GET['code']); // use your own function to sanitize the code due to security
     $calendar->getAccessToken($code);
+
     // for event creation
     $timezone = $calendar->getCalendarTimezone(); // to get user calendar timezone
     $attendees = [
         ["email" => "test@test.com"]
     ];
+
     $event_time = [
                 "start" => [
                     "dateTime" => "2022-12-31T12:00:00",
@@ -39,20 +46,27 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
                     "timeZone" => $timezone
                 ],
             ];
+
     $meet_id = "uniquestring";
+
     $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
+
     $data = $calendar->createEvent($event); // calendar_id is optionals argument
     // on successful will get the event resource
     // retrive event id or meet link $data['id'] | $data['hangoutLink']
     
     // for event update
     $timezone = $calendar->getCalendarTimezone(); // to get user calendar timezone
+
     $attendees = [
         ["email" => "test@test.com"],
         ["email" => "test1@test.com"] // add 1 more attendee
     ];
+    
     $event_id = $data['id'];
+
     $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
+
     $data = $calendar->updateEvent($event_id, $event); // calendar_id is optionals argument
     // on successful will get the event resource
     

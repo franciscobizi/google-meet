@@ -21,6 +21,16 @@ final class GoogleCalendarTest extends TestCase
     {
     }
 
+    public function testAuth()
+    {
+        $url = GoogleCalendar::auth('testtere','dfkdfkdfd');
+        $permission_url = 'https://accounts.google.com/o/oauth2/auth?scope=' 
+                  . urlencode('https://www.googleapis.com/auth/calendar') 
+                  . '&redirect_uri=testtere' 
+                  . '&response_type=code&client_id=dfkdfkdfd&access_type=online';
+        $this->assertEquals($url, $permission_url);
+    }
+
     public function testGetAccessToken()
     {
         $code = "code";
