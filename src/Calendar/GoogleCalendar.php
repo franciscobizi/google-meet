@@ -168,30 +168,34 @@ class GoogleCalendar
     public static function eventData(
         array $attendees,
         array $date_time,
-        string $meet_id,
+        string $meet_id = "",
         string $event_title = "",
         string $description = ""
     ): array {
 
-        return [
-            'summary' => !empty($event_title) ? $event_title : "Consultation Appointment",
+        $data = [
+            'summary'     => !empty($event_title) ? $event_title : "Consultation Appointment",
             'description' => !empty($description) ? $description : "Consultation appointment with patient",
-            'start' => $date_time['start'],
-            'end' => $date_time['end'],
-            'attendees' => $attendees,
-            'reminders' => [
+            'start'       => $date_time['start'],
+            'end'         => $date_time['end'],
+            'attendees'   => $attendees,
+            'reminders'   => [
                 'useDefault' => true,
             ],
-            "conferenceData" => [
+        ];
+
+        if (!empty($meet_id)) {
+            $data["conferenceData"] = [
                 "createRequest" => [
                     "conferenceSolutionKey" => [
                         "type" => "hangoutsMeet"
                     ],
                     "requestId" => $meet_id
                 ]
-            ],
+            ];
+        }
 
-        ];
+        return $data;
     }
 
     private function fetch(string $method, string $message = "", bool $json = false): array

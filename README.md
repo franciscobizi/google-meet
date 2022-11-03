@@ -71,7 +71,7 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
 
     $event_id = $data['id'];
 
-    $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
+    $event = GoogleCalendar::eventData($attendees, $event_time); // have four more optionals arguments, please look at this method
 
     $data = $calendar->updateEvent($event_id, $event); // calendar_id is optionals argument
     // on successful will get the event resource
