@@ -2,7 +2,7 @@
 
 namespace FBIZI\Calendar;
 
-use FBIZI\Traits\AuthErrorResponse;
+use FBIZI\Traits\ErrorsResponse;
 
 /**
  * Google Calendar class
@@ -11,7 +11,7 @@ use FBIZI\Traits\AuthErrorResponse;
  */
 class GoogleCalendar
 {
-    use AuthErrorResponse;
+    use ErrorsResponse;
 
     protected const BASE_URL = 'https://www.googleapis.com/';
     protected const ACCOUNT_URL = 'https://accounts.google.com/';
@@ -56,22 +56,29 @@ class GoogleCalendar
         return $url;
     }
 
-    public function getAccessToken(string $code): array
+    public function getAccessToken(string $code, bool $refresh = false): array
     {
         if (!empty($code)) {
-            $this->endpoint = self::BASE_URL . 'oauth2/v4/token';
-            $this->fields = 'client_id='
-                . $this->client_id . '&redirect_uri='
-                . $this->redirect_url . '&client_secret='
-                . $this->client_secret . '&code=' . $code . '&grant_type=authorization_code';
-            $token = $this->fetch('POST', 'Error : Failed to get access token');
-            if (isset($token['access_token'])) {
-                $this->token = $token['access_token'];
-                $this->refresh_token = $token['refresh_token'];
-                return $token;
-            }
+            return $this->show(401, "Missing authorization code or refresh token");
         }
-        return [];
+
+        $this->endpoint = self::BASE_URL . 'oauth2/v4/token';
+        $this->fields = 'client_id='
+            . $this->client_id . '&client_secret='
+            . $this->client_secret;
+
+        if($refresh){
+            $this->fields .= '&refresh_token=' . $code . '&grant_type=refresh_token';
+        }else{
+            $this->fields .= '&redirect_uri='
+                . $this->redirect_url . '&code=' . $code . '&grant_type=authorization_code';
+        }
+
+        $token = $this->fetch('POST', 'Error : Failed to get access token');
+
+        $this->token = $token['access_token'] ?? $this->token;
+        $this->refresh_token = $token['refresh_token'] ?? $this->refresh_token;
+        return $token;
     }
 
     public function getCalendarTimezone(): array
@@ -82,7 +89,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch('GET', 'Error : Failed to get calendar timezone');
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public function getCalendarsList(): array
@@ -96,7 +103,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch('GET', 'Error : Failed to get calendars list');
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public function getCalendarById(string $calendar_id): array
@@ -108,7 +115,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch('GET', 'Error : Failed to get calendars list');
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public function createEvent(array $event, string $calendar_id = ''): array
@@ -128,9 +135,9 @@ class GoogleCalendar
             if (!empty($this->fields)) {
                 return $this->fetch('POST', 'Error : Failed to create event', true);
             }
-            return ['message' => 'Missing event data body'];
+            return $this->show(404, "Missing event data body");
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public function getEvent(string $event_id, string $calendar_id = ''): array
@@ -142,7 +149,7 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch('GET', 'Error : Failed to get event');
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public function updateEvent(string $event_id, array $event, string $calendar_id = ''): array
@@ -161,9 +168,9 @@ class GoogleCalendar
             if (!empty($this->fields)) {
                 return $this->fetch('PUT', 'Error : Failed to update event', true);
             }
-            return ['message' => 'Missing event data body'];
+            return $this->show(404, "Missing event data body");
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public function cancelEvent(string $event_id, $calendar_id = ''): array
@@ -179,33 +186,16 @@ class GoogleCalendar
             $this->fields = [];
             return $this->fetch('DELETE', 'Error : Failed to cancel event');
         }
-        return $this->unauthenticated();
+        return $this->show(401, "Missing token. Get token before procceed to this action.");
     }
 
     public static function eventData(array $args): array
     {
-        $args = [
-            'title' => 'Event title',  // optional
-            'description' => 'Event description',  // optional
-            'start' => [
-                'dateTime' => '2024-12-31T12:00:00',
-                'timeZone' => 'America/New_York'
-            ],
-            'end' => [
-                'dateTime' => '2024-12-31T13:00:00',
-                'timeZone' => 'America/New_York'
-            ],
-            'attendees' => [
-                ['email' => 'test@test.com']
-            ],
-            'meet_id' => 'jdjhjdhdjdj'  // optional
-        ];
-
         $data = [
             'summary' => $args['title'] ?? 'Appointment',
             'description' => $args['description'] ?? 'Appointment with client',
-            'start' => $args['start'] ?? str_replace(' ', 'T', date('Y-m-d H:i:s')),
-            'end' => $args['end'] ?? str_replace(' ', 'T', date('Y-m-d H:i:s')),
+            'start' => $args['start'] ?? [],
+            'end' => $args['end'] ?? [],
             'attendees' => $args['attendees'] ?? [],
             'reminders' => [
                 'useDefault' => true,
