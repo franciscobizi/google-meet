@@ -49,7 +49,7 @@ class GoogleCalendar
                 . '&redirect_uri=' . $redirect_url
                 . '&response_type=code&client_id=' . $client_id . '&access_type=' . $access_type;
             if ($redirect) {
-                header("Location: {$url}");
+                header('Location: ' . filter_var($url, FILTER_SANITIZE_URL));
                 exit;
             }
         }
