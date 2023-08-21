@@ -1,5 +1,5 @@
 # Google Calendar With Meet Conference
-Light Google Calendar API library for managing events on Google Calendar. You can create event with video conference (google meet), update and cancel. The library focus only on Calendar Events resource.
+Lightweight Google Calendar API library for managing events on Google Calendar. You can create event with video conference (google meet), update and cancel. The library focus only on Calendar Events resource.
 
 ## Installation
 Package is available on [Packagist](https://packagist.org/packages/fbizi/google-meet), you can install it using Composer.
@@ -17,63 +17,61 @@ use FBIZI\Calendar\GoogleCalendar;
 
 $calendar = new GoogleCalendar(CLIENT_ID, CLIENT_REDIRECT_URL, CLIENT_SECRET);
 
-// Build authenticate link so you can call it
-$url = GoogleCalendar::auth(CLIENT_REDIRECT_URL, CLIENT_ID);
+// Generate authenticate url link so you can call it
+$url = GoogleCalendar::auth(string $client_redirect_url, string $client_id, string $access_type optional, bool $redirect optional);
 
-// OR
-$url = 'https://accounts.google.com/o/oauth2/auth?scope=' 
-                  . urlencode('https://www.googleapis.com/auth/calendar') 
-                  . '&redirect_uri=' . CLIENT_REDIRECT_URL 
-                  . '&response_type=code&client_id=' . CLIENT_ID . '&access_type=online';
-
+// check if get the response code after calling the authentication url
 if(isset($_GET['code']) && !empty($_GET['code'])){
-    $code = sanitize_your_code($_GET['code']); // use your own function to sanitize the code due to security
+    $code = $_GET['code'];
     $calendar->getAccessToken($code);
 
-    // if you want to save the token some where for use later e.g DB just call this
-    $saved_token = $calendar->token // you get the token
+    // if you want to save the token and refresh_token somewhere for use later e.g DB just call this
+    $token_to_save = $calendar->token
+    $refresh_token_to_save = $calendar->refresh_token
 
-    // to assign saved token just do this
-    $calendar->token = $saved_token; 
+    // if want to assign saved token and refresh_token just do this
+    $calendar->token = $token_to_save; 
+    $calendar->refresh_token = $refresh_token_to_save;
 
     // for event creation
     $timezone = $calendar->getCalendarTimezone(); // to get user calendar timezone
-    $attendees = [
-        ["email" => "test@test.com"]
+
+    $args = [
+        "title" => "Event title", // optional
+        "description" => "Event description", // optional
+        "start" => [
+                "dateTime" => "2024-12-31T12:00:00",
+                "timeZone" => $timezone['value']
+        ],
+        "end" => [
+            "dateTime" => "2024-12-31T13:00:00",
+            "timeZone" => $timezone['value'],
+        ],
+        "attendees" => [
+            ["email" => "test1@test.com"]
+        ],
+        "meet_id" => "jdjhjdhdjdj", // optional
     ];
 
-    $event_time = [
-                "start" => [
-                    "dateTime" => "2022-12-31T12:00:00",
-                    "timeZone" => $timezone
-                ],
-                "end" => [
-                    "dateTime" => "2022-12-31T13:00:00",
-                    "timeZone" => $timezone
-                ],
-            ];
+    $event = GoogleCalendar::eventData(array $args);
 
-    $meet_id = "uniquestring";
-
-    $event = GoogleCalendar::eventData($attendees, $event_time, $meet_id); // have three more optionals arguments, please look at this method
-
-    $data = $calendar->createEvent($event); // calendar_id is optionals argument
+    $data = $calendar->createEvent(array $event, string $calendar_id optional);
     // on successful will get the event resource
     // retrive event id or meet link $data['id'] | $data['hangoutLink']
     
     // for event update
     $timezone = $calendar->getCalendarTimezone(); // to get user calendar timezone
 
-    $attendees = [
-        ["email" => "test@test.com"],
-        ["email" => "test1@test.com"] // add 1 more attendee
+    $args['attendees'] = [
+        ["email" => "test1@test.com"],
+        ["email" => "test2@test.com"] // add 1 more attendee
     ];
 
     $event_id = $data['id'];
 
-    $event = GoogleCalendar::eventData($attendees, $event_time); // have four more optionals arguments, please look at this method
+    $event = GoogleCalendar::eventData(array $args);
 
-    $data = $calendar->updateEvent($event_id, $event); // calendar_id is optionals argument
+    $data = $calendar->updateEvent(string $event_id, array $event, string $calendar_id optional);
     // on successful will get the event resource
     
     // for event cancellation

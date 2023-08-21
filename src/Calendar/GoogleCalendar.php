@@ -13,48 +13,65 @@ class GoogleCalendar
 {
     use AuthErrorResponse;
 
-    protected const BASE_URL = "https://www.googleapis.com/";
-    protected const ACCOUNT_URL = "https://accounts.google.com/";
+    protected const BASE_URL = 'https://www.googleapis.com/';
+    protected const ACCOUNT_URL = 'https://accounts.google.com/';
+
     public string $token;
+    public string $refresh_token;
     private string $endpoint;
-    private array | string $fields;
+    private array|string $fields;
     private array $header = [];
-    private string $calendar_id = "primary";
+    private string $calendar_id = 'primary';
+    private string $client_id;
+    private string $redirect_url;
+    private string $client_secret;
 
     public function __construct(
-        private string $client_id,
-        private string $redirect_url,
-        private string $client_secret
+        string $client_id,
+        string $redirect_url,
+        string $client_secret
     ) {
+        $this->client_id = $client_id;
+        $this->client_secret = $client_secret;
+        $this->redirect_url = $redirect_url;
     }
 
     public static function auth(
         string $redirect_url,
         string $client_id,
-        string $access_type = "online"
+        string $access_type = 'online',
+        bool $redirect = false
     ): string {
+        $url = '';
         if (!empty($redirect_url) && !empty($client_id)) {
-            return self::ACCOUNT_URL . 'o/oauth2/auth?scope='
+            $url = self::ACCOUNT_URL . 'o/oauth2/auth?scope='
                 . urlencode(self::BASE_URL . 'auth/calendar')
                 . '&redirect_uri=' . $redirect_url
                 . '&response_type=code&client_id=' . $client_id . '&access_type=' . $access_type;
+            if ($redirect) {
+                header("Location: {$url}");
+                exit;
+            }
         }
-        return '';
+        return $url;
     }
 
-    public function getAccessToken(string $code): void
+    public function getAccessToken(string $code): array
     {
         if (!empty($code)) {
             $this->endpoint = self::BASE_URL . 'oauth2/v4/token';
-            $this->fields = 'client_id=' .
-                $this->client_id . '&redirect_uri=' .
-                $this->redirect_url . '&client_secret=' .
-                $this->client_secret . '&code=' . $code . '&grant_type=authorization_code';
-            $token = $this->fetch("POST", 'Error : Failed to get access token');
+            $this->fields = 'client_id='
+                . $this->client_id . '&redirect_uri='
+                . $this->redirect_url . '&client_secret='
+                . $this->client_secret . '&code=' . $code . '&grant_type=authorization_code';
+            $token = $this->fetch('POST', 'Error : Failed to get access token');
             if (isset($token['access_token'])) {
                 $this->token = $token['access_token'];
+                $this->refresh_token = $token['refresh_token'];
+                return $token;
             }
         }
+        return [];
     }
 
     public function getCalendarTimezone(): array
@@ -63,7 +80,7 @@ class GoogleCalendar
             $this->endpoint = self::BASE_URL . 'calendar/v3/users/me/settings/timezone';
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            return $this->fetch("GET", 'Error : Failed to get calendar timezone');
+            return $this->fetch('GET', 'Error : Failed to get calendar timezone');
         }
         return $this->unauthenticated();
     }
@@ -77,7 +94,7 @@ class GoogleCalendar
             $this->endpoint = self::BASE_URL . 'calendar/v3/users/me/calendarList?' . http_build_query($params);
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            return $this->fetch("GET", 'Error : Failed to get calendars list');
+            return $this->fetch('GET', 'Error : Failed to get calendars list');
         }
         return $this->unauthenticated();
     }
@@ -89,7 +106,7 @@ class GoogleCalendar
             $this->endpoint = self::BASE_URL . "calendar/v3/calendars/{$this->calendar_id}";
             $this->header = array('Authorization: Bearer ' . $this->token, 'Accept: application/json');
             $this->fields = [];
-            return $this->fetch("GET", 'Error : Failed to get calendars list');
+            return $this->fetch('GET', 'Error : Failed to get calendars list');
         }
         return $this->unauthenticated();
     }
@@ -98,20 +115,20 @@ class GoogleCalendar
     {
         if (!empty($this->token)) {
             $params = array();
-            $params["sendUpdates"] = "all";
-            $params["conferenceDataVersion"] = 1;
+            $params['sendUpdates'] = 'all';
+            $params['conferenceDataVersion'] = 1;
             $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
-            $this->endpoint = self::BASE_URL .
-                "calendar/v3/calendars/{$this->calendar_id}/events?" .
-                http_build_query($params);
+            $this->endpoint = self::BASE_URL
+                . "calendar/v3/calendars/{$this->calendar_id}/events?"
+                . http_build_query($params);
 
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = $event;
 
             if (!empty($this->fields)) {
-                return $this->fetch("POST", 'Error : Failed to create event', true);
+                return $this->fetch('POST', 'Error : Failed to create event', true);
             }
-            return ['message' => "Missing event data body"];
+            return ['message' => 'Missing event data body'];
         }
         return $this->unauthenticated();
     }
@@ -123,7 +140,7 @@ class GoogleCalendar
             $this->endpoint = self::BASE_URL . "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}";
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            return $this->fetch("GET", 'Error : Failed to get event');
+            return $this->fetch('GET', 'Error : Failed to get event');
         }
         return $this->unauthenticated();
     }
@@ -132,19 +149,19 @@ class GoogleCalendar
     {
         if (!empty($this->token)) {
             $params = array();
-            $params["sendUpdates"] = "all";
-            $params["conferenceDataVersion"] = 1;
+            $params['sendUpdates'] = 'all';
+            $params['conferenceDataVersion'] = 1;
             $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
-            $this->endpoint = self::BASE_URL .
-                "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?" .
-                http_build_query($params);
+            $this->endpoint = self::BASE_URL
+                . "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?"
+                . http_build_query($params);
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = $event;
 
             if (!empty($this->fields)) {
-                return $this->fetch("PUT", 'Error : Failed to update event', true);
+                return $this->fetch('PUT', 'Error : Failed to update event', true);
             }
-            return ['message' => "Missing event data body"];
+            return ['message' => 'Missing event data body'];
         }
         return $this->unauthenticated();
     }
@@ -153,44 +170,55 @@ class GoogleCalendar
     {
         if (!empty($this->token)) {
             $params = array();
-            $params["sendUpdates"] = "all";
+            $params['sendUpdates'] = 'all';
             $this->calendar_id = !empty($calendar_id) ? $calendar_id : $this->calendar_id;
-            $this->endpoint = self::BASE_URL .
-                "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?" .
-                http_build_query($params);
+            $this->endpoint = self::BASE_URL
+                . "calendar/v3/calendars/{$this->calendar_id}/events/{$event_id}?"
+                . http_build_query($params);
             $this->header = array('Authorization: Bearer ' . $this->token);
             $this->fields = [];
-            return $this->fetch("DELETE", 'Error : Failed to cancel event');
+            return $this->fetch('DELETE', 'Error : Failed to cancel event');
         }
         return $this->unauthenticated();
     }
 
-    public static function eventData(
-        array $attendees,
-        array $date_time,
-        string $meet_id = "",
-        string $event_title = "",
-        string $description = ""
-    ): array {
+    public static function eventData(array $args): array
+    {
+        $args = [
+            'title' => 'Event title',  // optional
+            'description' => 'Event description',  // optional
+            'start' => [
+                'dateTime' => '2024-12-31T12:00:00',
+                'timeZone' => 'America/New_York'
+            ],
+            'end' => [
+                'dateTime' => '2024-12-31T13:00:00',
+                'timeZone' => 'America/New_York'
+            ],
+            'attendees' => [
+                ['email' => 'test@test.com']
+            ],
+            'meet_id' => 'jdjhjdhdjdj'  // optional
+        ];
 
         $data = [
-            'summary'     => !empty($event_title) ? $event_title : "Consultation Appointment",
-            'description' => !empty($description) ? $description : "Consultation appointment with patient",
-            'start'       => $date_time['start'],
-            'end'         => $date_time['end'],
-            'attendees'   => $attendees,
-            'reminders'   => [
+            'summary' => $args['title'] ?? 'Appointment',
+            'description' => $args['description'] ?? 'Appointment with client',
+            'start' => $args['start'] ?? str_replace(' ', 'T', date('Y-m-d H:i:s')),
+            'end' => $args['end'] ?? str_replace(' ', 'T', date('Y-m-d H:i:s')),
+            'attendees' => $args['attendees'] ?? [],
+            'reminders' => [
                 'useDefault' => true,
             ],
         ];
 
-        if (!empty($meet_id)) {
-            $data["conferenceData"] = [
-                "createRequest" => [
-                    "conferenceSolutionKey" => [
-                        "type" => "hangoutsMeet"
+        if (isset($args['meet_id']) && !empty($args['meet_id'])) {
+            $data['conferenceData'] = [
+                'createRequest' => [
+                    'conferenceSolutionKey' => [
+                        'type' => 'hangoutsMeet'
                     ],
-                    "requestId" => $meet_id
+                    'requestId' => $args['meet_id']
                 ]
             ];
         }
@@ -198,7 +226,7 @@ class GoogleCalendar
         return $data;
     }
 
-    private function fetch(string $method, string $message = "", bool $json = false): array
+    private function fetch(string $method, string $message = '', bool $json = false): array
     {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->endpoint);
@@ -213,11 +241,11 @@ class GoogleCalendar
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $json == true ? json_encode($this->fields) : $this->fields);
                 break;
             case 'PUT':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PUT");
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $json == true ? json_encode($this->fields) : $this->fields);
                 break;
             case 'DELETE':
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
                 break;
             default:
                 break;
