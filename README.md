@@ -26,8 +26,8 @@ if(isset($_GET['code']) && !empty($_GET['code'])){
     $calendar->getAccessToken($code);
 
     // if you want to save the token and refresh_token somewhere for use later e.g DB just call this
-    $token_to_save = $calendar->token
-    $refresh_token_to_save = $calendar->refresh_token
+    $token_to_save = $calendar->token;
+    $refresh_token_to_save = $calendar->refresh_token;
 
     // if want to assign saved token and refresh_token just do this
     $calendar->token = $token_to_save; 
