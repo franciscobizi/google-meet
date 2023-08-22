@@ -58,7 +58,7 @@ class GoogleCalendar
 
     public function getAccessToken(string $code, bool $refresh = false): array
     {
-        if (!empty($code)) {
+        if (empty($code)) {
             return $this->show(401, "Missing authorization code or refresh token");
         }
 
