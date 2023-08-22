@@ -16,8 +16,8 @@ class GoogleCalendar
     protected const BASE_URL = 'https://www.googleapis.com/';
     protected const ACCOUNT_URL = 'https://accounts.google.com/';
 
-    public string $token;
-    public string $refresh_token;
+    public string $token = '';
+    public string $refresh_token = '';
     private string $endpoint;
     private array|string $fields;
     private array $header = [];
